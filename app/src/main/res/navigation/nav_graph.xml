@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/HashtagsFragment">
+
+    <fragment
+        android:id="@+id/HashtagsFragment"
+        android:name="com.annalisetarhan.torch.ui.HashtagsFragment"
+        android:label="Hashtag Fragment"
+        tools:layout="@layout/fragment_hashtags">
+
+        <action
+            android:id="@+id/action_HashtagsFragment_to_ConvoFragment"
+            app:destination="@id/ConvoFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/ConvoFragment"
+        android:name="com.annalisetarhan.torch.ui.ConvoFragment"
+        android:label="Convo Fragment"
+        tools:layout="@layout/fragment_convo">
+
+        <action
+            android:id="@+id/action_ConvoFragment_to_HashtagsFragment"
+            app:destination="@id/HashtagsFragment" />
+    </fragment>
+</navigation>
