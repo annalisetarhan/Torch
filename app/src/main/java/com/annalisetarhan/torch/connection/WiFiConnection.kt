@@ -14,7 +14,6 @@ class WiFiConnection(val context: Context, val handler: Handler) {
 
     val manager: WifiAwareManager? = context.getSystemService(Context.WIFI_AWARE_SERVICE) as WifiAwareManager?
     var session: WifiAwareSession? = null
-    var keyPair: KeyPair? = null
 
     var attachFailedFlag = false
 
@@ -34,7 +33,6 @@ class WiFiConnection(val context: Context, val handler: Handler) {
         }
         context.registerReceiver(myReceiver, filter)
 
-        getKeys()
         getSession()        // Assuming the receiver doesn't get some sort of auto-current-state response, which would trigger a getSession()
         startPublishing()
         startSubscribing()
@@ -80,13 +78,6 @@ class WiFiConnection(val context: Context, val handler: Handler) {
 
     fun endSession() {
         session?.close()
-    }
-
-    // This should probably be in a message packaging class
-    fun getKeys() {
-        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
-        keyPairGenerator.initialize(1024)
-        keyPair = keyPairGenerator.genKeyPair()
     }
 }
 
