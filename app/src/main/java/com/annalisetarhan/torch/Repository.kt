@@ -6,7 +6,8 @@ import java.security.KeyPairGenerator
 
 class Repository {
     val peers = hashMapOf<PeerHandle, Int>()    // <PeerHandle, LastConnectTime> (NextConnectTime?)
-    val hashkeys = hashMapOf<String, Int>()     // <HashKey, NumMsgs>
+    val hashkeys = hashMapOf<String, Int>()     // <HashKey, NumMsgs> DELETE? why is this here?
+    val activeHashtags = arrayOfNulls<String>(5)
 
     fun sendMessage(rawMessage: String) {
 

@@ -21,7 +21,7 @@ data class DatabaseMessage(
 
     /* These will only be filled in if user has entered the corresponding hashtag */
     @ColumnInfo var hashtag: String? = null,
-    @ColumnInfo var hashkey: ByteArray? = null,
-    @ColumnInfo var senderPublicKey: String? = null,
-    @ColumnInfo var messageString: String? = null
+    @ColumnInfo var timeSent: Long? = null,
+    @ColumnInfo var senderPublicKey: ByteArray? = null,
+    @ColumnInfo var message: String? = null
 )
