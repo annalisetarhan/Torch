@@ -24,8 +24,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         super.onCleared()
         connection?.endSession()
     }
-
-    fun getNewKeys() {
-        connection?.getKeys()
-    }
 }
