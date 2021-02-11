@@ -51,12 +51,17 @@ class MessageFactory {
                 )
     }
 
-    fun makeNetworkMessage(dbMessage: DatabaseMessage): NetworkMessage =
-            NetworkMessage(
-                    dbMessage.messageId,
-                    dbMessage.ttd,
-                    dbMessage.encMessage
-            )
+    fun makeNetworkMessage(dbMessage: DatabaseMessage): NetworkMessage {
+        val rawTtd = dbMessage.ttd.toString().toByteArray()
+        val paddedTtd = ByteArray(8)
+        rawTtd.copyInto(paddedTtd, 8-rawTtd.size)
+
+        return NetworkMessage(
+                dbMessage.messageId,
+                paddedTtd,
+                dbMessage.encMessage
+        )
+    }
 
     private fun generateKeyPair() {
         val keyPairGenerator = KeyPairGenerator.getInstance("RSA")

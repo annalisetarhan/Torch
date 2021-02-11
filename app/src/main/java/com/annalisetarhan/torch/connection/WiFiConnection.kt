@@ -6,14 +6,20 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.wifi.aware.*
 import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
+import com.annalisetarhan.torch.Repository
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 
 class WiFiConnection(val context: Context, val handler: Handler) {
+    val repository = Repository(context) // TODO: dependency injection
 
     val manager: WifiAwareManager? = context.getSystemService(Context.WIFI_AWARE_SERVICE) as WifiAwareManager?
-    var session: WifiAwareSession? = null
+    var wifiSession: WifiAwareSession? = null
+    var publishSession: PublishDiscoverySession? = null
+
+    val peers = hashMapOf<PeerHandle, Int>()    // <PeerHandle, LastConnectTime>
 
     var attachFailedFlag = false
 
@@ -23,8 +29,8 @@ class WiFiConnection(val context: Context, val handler: Handler) {
         val myReceiver = object : BroadcastReceiver() {
 
             override fun onReceive(context: Context, intent: Intent) {
-                session = null
-                if (manager?.isAvailable == true) {        // manager?.isAvailable might be null, which isn't cool. So, == true
+                wifiSession = null
+                if (manager?.isAvailable == true) {
                     getSession()
                 } else {
                     Toast.makeText(context, "WiFi Aware not available. Messages may not send or be received.", Toast.LENGTH_LONG).show()
@@ -56,7 +62,7 @@ class WiFiConnection(val context: Context, val handler: Handler) {
             override fun onAttached(awareSession: WifiAwareSession?) {
                 super.onAttached(awareSession)
                 attachFailedFlag = false
-                session = awareSession
+                wifiSession = awareSession
 
             }
         }, handler)
@@ -66,7 +72,20 @@ class WiFiConnection(val context: Context, val handler: Handler) {
         val config: PublishConfig = PublishConfig.Builder()
                 .setServiceName("Torch")
                 .build()
-        session?.publish(config, object : DiscoverySessionCallback() {
+        wifiSession?.publish(config, object : DiscoverySessionCallback()
+        {
+            override fun onPublishStarted(session: PublishDiscoverySession) {
+                super.onPublishStarted(session)
+                publishSession = session
+            }
+
+            // This will be an announcement that a new peer has discovered this publish
+            override fun onMessageReceived(peerHandle: PeerHandle?, message: ByteArray?) {
+                super.onMessageReceived(peerHandle, message)
+                if (peerHandle != null) {
+                    peers[peerHandle] = 0
+                }
+            }
         }, handler)
     }
 
@@ -74,10 +93,12 @@ class WiFiConnection(val context: Context, val handler: Handler) {
 
     fun connectToPeer(peer: PeerHandle, msgList: String) {}
 
-    fun sendMessage(peer: PeerHandle, msg: String) {}
+    fun sendMessage(peer: PeerHandle, message: NetworkMessage) {
+        publishSession?.sendMessage(peer, message.messageId.toString().toInt(), )
+    }
 
     fun endSession() {
-        session?.close()
+        wifiSession?.close()
     }
 }
 
