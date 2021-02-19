@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.*
 
-@Entity
+@Entity(tableName = "message_table")
 data class DatabaseMessage(
     /* uid - Internal to this database */
     @PrimaryKey val uuid: String,

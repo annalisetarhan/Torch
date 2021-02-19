@@ -6,27 +6,22 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.wifi.aware.*
 import android.os.Handler
-import android.os.Looper
 import android.widget.Toast
-import com.annalisetarhan.torch.Repository
-import java.security.KeyPair
-import java.security.KeyPairGenerator
 
 class WiFiConnection(val context: Context, val handler: Handler) {
-    val repository = Repository(context) // TODO: dependency injection
-
     val manager: WifiAwareManager? = context.getSystemService(Context.WIFI_AWARE_SERVICE) as WifiAwareManager?
     var wifiSession: WifiAwareSession? = null
     var publishSession: PublishDiscoverySession? = null
 
     val peers = hashMapOf<PeerHandle, Int>()    // <PeerHandle, LastConnectTime>
 
+    /* Used to try to attach  */
     var attachFailedFlag = false
 
     init {
         /* Create and register a broadcast receiver to track changes in WiFi Aware availability */
         val filter = IntentFilter(WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED)
-        val myReceiver = object : BroadcastReceiver() {
+        val receiver = object : BroadcastReceiver() {
 
             override fun onReceive(context: Context, intent: Intent) {
                 wifiSession = null
@@ -37,7 +32,7 @@ class WiFiConnection(val context: Context, val handler: Handler) {
                 }
             }
         }
-        context.registerReceiver(myReceiver, filter)
+        context.registerReceiver(receiver, filter)
 
         getSession()        // Assuming the receiver doesn't get some sort of auto-current-state response, which would trigger a getSession()
         startPublishing()
@@ -89,12 +84,16 @@ class WiFiConnection(val context: Context, val handler: Handler) {
         }, handler)
     }
 
-    private fun startSubscribing() {}
+    private fun startSubscribing() {
+        // TODO
+    }
 
     fun connectToPeer(peer: PeerHandle, msgList: String) {}
 
-    fun sendMessage(peer: PeerHandle, message: NetworkMessage) {
-        publishSession?.sendMessage(peer, message.messageId.toString().toInt(), )
+    fun sendMessage(message: NetworkMessage) {
+        for (peer in peers.keys) {
+            publishSession?.sendMessage(peer, message.networkId, message.ttd + message.encMessage)
+        }
     }
 
     fun endSession() {

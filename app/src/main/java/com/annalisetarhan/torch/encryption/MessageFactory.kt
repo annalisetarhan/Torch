@@ -2,7 +2,6 @@ package com.annalisetarhan.torch.encryption
 
 import android.util.Log
 import com.annalisetarhan.torch.BuildConfig
-import com.annalisetarhan.torch.DomainMessage
 import com.annalisetarhan.torch.connection.NetworkMessage
 import com.annalisetarhan.torch.database.DatabaseMessage
 import com.annalisetarhan.torch.encryption.Constants.Companion.GCM_IV_BYTES
@@ -10,7 +9,9 @@ import com.annalisetarhan.torch.encryption.Constants.Companion.GCM_TAG_BITS
 import com.annalisetarhan.torch.encryption.Constants.Companion.RSA_KEY_BITS
 import com.annalisetarhan.torch.encryption.Constants.Companion.SECONDS_IN_AN_HOUR
 import com.annalisetarhan.torch.encryption.Constants.Companion.SECONDS_IN_A_DAY
-import com.annalisetarhan.torch.encryption.Constants.Companion.UNIX_TIMESTAMP_BYTES
+import com.annalisetarhan.torch.encryption.Constants.Companion.TRUNC_KEY_BYTES
+import com.annalisetarhan.torch.encryption.Constants.Companion.TTD_BYTES
+import java.nio.ByteBuffer
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
@@ -26,6 +27,8 @@ class MessageFactory {
     private var ttd = SECONDS_IN_A_DAY
     private lateinit var keyPair: KeyPair
 
+    val activeHashtags = arrayListOf<String>()
+
     // Does this actually need to be 256? It's only for making hashkeys from hashtags
     // and creating message digests of already encrypted messages. It would save 16 bytes in msgs...
     private val sha = MessageDigest.getInstance("SHA-256")
@@ -34,10 +37,17 @@ class MessageFactory {
         generateKeyPair()
     }
 
+    fun addHashtag(hashtag: String) {
+        activeHashtags.add(hashtag)
+    }
+
+    fun removeHashtag(hashtag: String) {
+        activeHashtags.remove(hashtag)
+    }
+
     fun makeDatabaseMessage(hashtag: String, rawMessage: String): DatabaseMessage {
-        val hashkey = hash(hashtag)
-        val timeSent = currentTimeInSecs()
-        val encMessage = encrypt(hashkey, hashtag, timeSent, rawMessage)
+        val timeSent: Long = currentTimeInSecs()
+        val encMessage: ByteArray = encrypt(hashtag, timeSent, rawMessage)
 
         return DatabaseMessage(
                 uuid = UUID.randomUUID().toString(),
@@ -52,36 +62,57 @@ class MessageFactory {
     }
 
     fun makeNetworkMessage(dbMessage: DatabaseMessage): NetworkMessage {
-        val rawTtd = dbMessage.ttd.toString().toByteArray()
-        val paddedTtd = ByteArray(8)
-        rawTtd.copyInto(paddedTtd, 8-rawTtd.size)
+        // TODO: split up long messages, reconstruct them on the other side
+        val paddedTtd = longToByteArray(dbMessage.ttd)
+
+        /* Size checks */
+        if (BuildConfig.DEBUG && dbMessage.messageId.size != 32) {
+            error("Assertion failed")
+        }
+        if (BuildConfig.DEBUG && (paddedTtd.size != Long.SIZE_BYTES || Long.SIZE_BYTES != 8)) {
+            error("Assertion failed")
+        }
 
         return NetworkMessage(
-                dbMessage.messageId,
-                paddedTtd,
-                dbMessage.encMessage
+                networkId = intFromByteArray(dbMessage.messageId),  // Truncated
+                ttd = paddedTtd,
+                encMessage = dbMessage.encMessage
         )
     }
 
-    private fun generateKeyPair() {
-        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
-        keyPairGenerator.initialize(RSA_KEY_BITS)
-        keyPair = keyPairGenerator.genKeyPair()
+    fun reconstructDatabaseMessage(networkMessage: NetworkMessage): DatabaseMessage {
+        val encMessage = networkMessage.encMessage
+        val msgWithoutIvOrTtd = encMessage.copyOfRange(GCM_IV_BYTES + TTD_BYTES, encMessage.size)
+        val dbMessage = DatabaseMessage(
+                uuid = UUID.randomUUID().toString(),
+                messageId = hash(msgWithoutIvOrTtd.toString(Charsets.UTF_8)),
+                ttd = longFromByteArray(networkMessage.ttd),
+                encMessage = networkMessage.encMessage
+        )
+        for (hashtag in activeHashtags) {
+            if (decrypt(hashtag, dbMessage)) {
+                break
+            }
+        }
+        return dbMessage
     }
 
     /*
-        Takes hashkey, hashtag, and message string, returns byte array with
-        raw IV + encrypted(hashtag + timeSent + senderPkTrunc + message)
+        ENCRYPTION / DECRYPTION
      */
-    private fun encrypt(hashkey: ByteArray, hashtag: String, timeSent: Long, rawMessage: String): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+
+    // Returns: rawIV + encrypted(hashtag + timeSent + senderPkTrunc + message)
+    private fun encrypt(hashtag: String, timeSent: Long, rawMessage: String): ByteArray {
+        val hashkey = hash(hashtag)
         val key = SecretKeySpec(hashkey, "AES")
         val publicKey: ByteArray = truncatedPublicKey()
 
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(ENCRYPT_MODE, key)
+
         val ciphertext = cipher.doFinal(
                 hashtag.toByteArray(Charsets.UTF_8) +
-                        timeSent.toString().toByteArray() +
+                        longToByteArray(timeSent) +
                         publicKey +
                         rawMessage.toByteArray(Charsets.UTF_8)
         )
@@ -102,10 +133,11 @@ class MessageFactory {
         return iv + ciphertext
     }
 
-    private fun decrypt(hashtag: String, encryptedMessage: ByteArray, messageId: ByteArray): DomainMessage? {
+    // Returns true if the hashtag was the right one, false otherwise. Updates dbMessage fields. MUST update database afterwards!!
+    fun decrypt(hashtag: String, dbMessage: DatabaseMessage): Boolean {
         val hashkey = hash(hashtag)
-        val iv = encryptedMessage.copyOfRange(0, GCM_IV_BYTES)
-        val ciphertext = encryptedMessage.copyOfRange(GCM_IV_BYTES, encryptedMessage.size)
+        val iv = dbMessage.encMessage.copyOfRange(0, GCM_IV_BYTES)
+        val ciphertext = dbMessage.encMessage.copyOfRange(GCM_IV_BYTES, dbMessage.encMessage.size)
         val gcmSpec = GCMParameterSpec(GCM_TAG_BITS, iv)
         val key = SecretKeySpec(hashkey, "AES")
 
@@ -120,24 +152,23 @@ class MessageFactory {
             Log.w("DECRYPT", "Bad Authentication Tag in received message")
             null
         }
-        return if (plaintext?.copyOfRange(0,hashtag.length)?.equals(hashtag) == true) {
+        return if (plaintext?.copyOfRange(0,hashtag.length)?.toString(Charsets.UTF_8) == hashtag) {
             val timeSentStart = hashtag.length
-            val senderPublicKeyStart = timeSentStart + UNIX_TIMESTAMP_BYTES
-            val messageStart = senderPublicKeyStart + (RSA_KEY_BITS / 8)
+            val senderPublicKeyStart = timeSentStart + Long.SIZE_BYTES
+            val messageStart = senderPublicKeyStart + TRUNC_KEY_BYTES
 
             val timeSent = plaintext.copyOfRange(timeSentStart, senderPublicKeyStart)
             val senderPublicKey = plaintext.copyOfRange(senderPublicKeyStart, messageStart)
             val message = plaintext.copyOfRange(messageStart, plaintext.size)
 
-            DomainMessage(
-                    messageId,
-                    hashtag,
-                    timeSent.toString(Charsets.UTF_8).toLong(),
-                    senderPublicKey,
-                    message.toString(Charsets.UTF_8)
-            )
+            dbMessage.hashtag = hashtag
+            dbMessage.timeSent = longFromByteArray(timeSent)
+            dbMessage.senderPublicKeyTrunc = senderPublicKey
+            dbMessage.message = message.toString(Charsets.UTF_8)
+
+            true
         } else {
-            null
+            false
         }
     }
 
@@ -146,15 +177,43 @@ class MessageFactory {
         return sha.digest(message.toByteArray(Charsets.UTF_8))
     }
 
+    /*
+        UTILITY FUNCTIONS
+     */
+
+    // Number <-> ByteArray
+    private fun longToByteArray(long: Long): ByteArray {
+        val bytes = ByteArray(Long.SIZE_BYTES)
+        ByteBuffer.wrap(bytes).putLong(long)
+        return bytes
+    }
+
+    private fun intToByteArray(int: Int): ByteArray {
+        val bytes = ByteArray(Int.SIZE_BYTES)
+        ByteBuffer.wrap(bytes).putInt(int)
+        return bytes
+    }
+
+    private fun longFromByteArray(bytes: ByteArray): Long =  ByteBuffer.wrap(bytes).long
+    private fun intFromByteArray(bytes: ByteArray): Int = ByteBuffer.wrap(bytes).int
+
+    // Time
     private fun getMessageTtd(timeSent: Long): Long = timeSent + ttd
 
     private fun currentTimeInSecs(): Long = System.currentTimeMillis()/1000
 
-    private fun truncatedPublicKey(): ByteArray = keyPair.public.encoded.copyOfRange(0,20)
-
     fun updateTtdSetting(hours: Int) {
         ttd = hours * SECONDS_IN_AN_HOUR
     }
+
+    // Keys
+    private fun generateKeyPair() {
+        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
+        keyPairGenerator.initialize(RSA_KEY_BITS)
+        keyPair = keyPairGenerator.genKeyPair()
+    }
+
+    private fun truncatedPublicKey(): ByteArray = keyPair.public.encoded.copyOfRange(0, TRUNC_KEY_BYTES)
 }
 
 class Constants {
@@ -163,7 +222,8 @@ class Constants {
         const val SECONDS_IN_AN_HOUR = 3600
         const val GCM_IV_BYTES = 12
         const val GCM_TAG_BITS = 128
-        const val UNIX_TIMESTAMP_BYTES = 4
         const val RSA_KEY_BITS = 1024
+        const val TRUNC_KEY_BYTES = 10
+        const val TTD_BYTES = 8
     }
 }
