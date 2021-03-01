@@ -92,7 +92,7 @@ class WiFiConnection(val context: Context, val handler: Handler) {
 
     fun sendMessage(message: NetworkMessage) {
         for (peer in peers.keys) {
-            publishSession?.sendMessage(peer, message.networkId, message.ttd + message.encMessage)
+            publishSession?.sendMessage(peer, message.networkId, message.ttd + message.payload)
         }
     }
 

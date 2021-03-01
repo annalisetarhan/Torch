@@ -3,14 +3,11 @@ package com.annalisetarhan.torch
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.annalisetarhan.torch.connection.NetworkMessage
 import com.annalisetarhan.torch.connection.WiFiConnection
 import com.annalisetarhan.torch.database.AppDatabase
+import com.annalisetarhan.torch.database.DatabaseMessage
 import com.annalisetarhan.torch.encryption.MessageFactory
-import java.security.KeyPair
-import java.security.KeyPairGenerator
 
 class Repository(context: Context) {
     val messageFactory = MessageFactory()
@@ -27,16 +24,24 @@ class Repository(context: Context) {
     }
 
     /* Enforce the invariant that the rawMessage is at most 160 characters */
-    fun sendMessage(hashtag: String, rawMessage: String) {
-        val databaseMessage = messageFactory.makeDatabaseMessage(hashtag, rawMessage)
-        messageDao.insert(databaseMessage)
+    fun sendStandardMessage(hashtag: String, message: String) {
+        val databaseMessage = messageFactory.makeStandardDatabaseMessage(hashtag, message)
+        sendMessage(databaseMessage)
+    }
 
+    fun sendPrivateMessage(truncPk: Long, message: String) {
+        val databaseMessage = messageFactory.makePrivateDatabaseMessage(truncPk, message)
+        sendMessage(databaseMessage)
+    }
+
+    private fun sendMessage(databaseMessage: DatabaseMessage) {
+        messageDao.insert(databaseMessage)
         val networkMessage = messageFactory.makeNetworkMessage(databaseMessage)
         network.sendMessage(networkMessage)
     }
 
     fun receiveMessage(networkMessage: NetworkMessage) {
-        val dbMessage = messageFactory.reconstructDatabaseMessage(networkMessage)
+        val dbMessage = messageFactory.reconstructStandardMessage(networkMessage)
         messageDao.insert(dbMessage)
     }
 
@@ -47,7 +52,7 @@ class Repository(context: Context) {
 
         val mysteriousMessages = messageDao.getAllEncrypted()
         for (message in mysteriousMessages) {
-            if (messageFactory.decrypt(hashtag, message)) {
+            if (messageFactory.decryptStandardMessage(hashtag, message)) {
                 messageDao.addDecryptedInfo(message)
                 // TODO: liveData this so the view populates automatically
             }
