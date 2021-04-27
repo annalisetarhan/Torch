@@ -142,7 +142,6 @@ class HashtagsFragment : Fragment() {
 
     }
 
-    // Todo: How to remove hashtags?
     private fun removeHashtag(hashtag: String) {
         var deletedFlag = false
         for (i in 0..3) {

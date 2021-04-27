@@ -16,7 +16,9 @@ class Repository(context: Context) {
 
     var numActiveHashtags = 0
 
-    // TODO: track users, mapping truncated pk to full pk. when a user de/registers from/to a hashtag, change color code in previous messages (to grey?) if a user deregisters from the only shared hashtag, forget their full pk
+    // TODO: track users, mapping truncated pk to full pk. when a user de/registers from/to a hashtag,
+    //  change color code in previous messages (to grey?) if a user deregisters from the only shared hashtag,
+    //  forget their full pk
 
     init {
         // TODO: get active hashtags from sharedPrefs, feed them to messageFactory

@@ -1,13 +1,14 @@
 package com.annalisetarhan.torch.ui
 
 import android.app.Application
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.annalisetarhan.torch.connection.WiFiConnection
-import kotlinx.coroutines.launch
+import com.annalisetarhan.torch.Repository
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
+    var repo: Repository = Repository(application)
+
+    fun sendMessage(message: String, hashtag: String) {
+        repo.sendStandardMessage(message, hashtag)
+    }
 }
