@@ -13,7 +13,7 @@
     tools:context=".ui.ConvoFragment">
 
     <TextView
-        android:id="@+id/hashtag"
+        android:id="@+id/hashtag_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@{hashtag, default=Hashtag}"
@@ -28,7 +28,7 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         app:layout_constraintBottom_toTopOf="@id/send_message_edit_text"
-        app:layout_constraintTop_toBottomOf="@id/hashtag"
+        app:layout_constraintTop_toBottomOf="@id/hashtag_title"
         android:padding="8dp"
         android:layout_height="0dp" />
 
@@ -36,9 +36,10 @@
         android:id="@+id/send_message_edit_text"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/send_message_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/recyclerView"
-        android:text="Send Message"
+        android:hint="Say something!"
         android:padding="8dp"
         android:maxLength="160"
         android:layout_width="0dp" />
@@ -47,9 +48,10 @@
         android:id="@+id/send_message_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
+        android:text="Send"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="8dp"
         app:layout_constraintTop_toBottomOf="@id/recyclerView"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

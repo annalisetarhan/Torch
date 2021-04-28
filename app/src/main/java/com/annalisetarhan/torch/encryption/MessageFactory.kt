@@ -2,6 +2,7 @@ package com.annalisetarhan.torch.encryption
 
 import android.util.Log
 import androidx.databinding.library.BuildConfig
+import com.annalisetarhan.torch.DomainMessage
 import com.annalisetarhan.torch.connection.NetworkMessage
 import com.annalisetarhan.torch.database.DatabaseMessage
 import com.annalisetarhan.torch.encryption.Constants.Companion.CIPHER_TRANSFORMATION_STANDARD
@@ -9,7 +10,6 @@ import com.annalisetarhan.torch.encryption.Constants.Companion.CIPHER_TRANSFORMA
 import com.annalisetarhan.torch.encryption.Constants.Companion.GCM_IV_BYTES
 import com.annalisetarhan.torch.encryption.Constants.Companion.GCM_TAG_BITS
 import com.annalisetarhan.torch.encryption.Constants.Companion.KEY_PAIR_ALGORITHM
-import com.annalisetarhan.torch.encryption.Constants.Companion.MASK_GENERATION_FUNCTION
 import com.annalisetarhan.torch.encryption.Constants.Companion.MESSAGE_DIGEST_ALGORITHM
 import com.annalisetarhan.torch.encryption.Constants.Companion.RSA_KEY_BITS
 import com.annalisetarhan.torch.encryption.Constants.Companion.SECONDS_IN_AN_HOUR
@@ -24,14 +24,11 @@ import java.security.KeyPairGenerator
 import java.security.MessageDigest
 import java.security.PublicKey
 import java.security.interfaces.RSAPublicKey
-import java.security.spec.MGF1ParameterSpec
 import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.Cipher.DECRYPT_MODE
 import javax.crypto.Cipher.ENCRYPT_MODE
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.OAEPParameterSpec
-import javax.crypto.spec.PSource
 import javax.crypto.spec.SecretKeySpec
 
 class MessageFactory {
@@ -41,6 +38,7 @@ class MessageFactory {
     val activeHashtags = arrayListOf<String>()
     val fullPublicKeys: MutableMap<ByteArray, RSAPublicKey> = mutableMapOf()
 
+    // TESTING ONLY
     val tempFullPublicKeys: MutableMap<Long, PublicKey> = mutableMapOf()
 
     // Does this actually need to be 256? It's only for making hashkeys from hashtags
@@ -112,6 +110,20 @@ class MessageFactory {
                 ttd = paddedTtd,
                 messageInfo = dbMessage.messageInfo.toByte(),
                 payload = dbMessage.encMessage
+        )
+    }
+
+    /* Liberal use of !! because this will only be called on messages whose hashtag is known,
+     * so all other fields will be known as well */
+    fun makeDomainMessage(message: DatabaseMessage): DomainMessage {
+        return DomainMessage(
+                message.messageId,
+                message.messageInfo,
+                message.hashtag!!,
+                message.timeSent!!,
+                message.senderPublicKeyTrunc!!,
+                message.senderPublicKeyTrunc == truncatedPublicKey(),
+                message.message!!
         )
     }
 
@@ -321,7 +333,6 @@ class Constants {
         const val GCM_IV_BYTES = 12
         const val GCM_TAG_BITS = 128
         const val RSA_KEY_BITS = 1024
-        const val RSA_KEY_BYTES = 128
         const val TRUNC_KEY_BYTES = Long.SIZE_BYTES
         const val TIMESTAMP_BYTES = 8
         const val MESSAGE_INFO_BYTES = 1
@@ -330,7 +341,6 @@ class Constants {
         const val CIPHER_TRANSFORMATION_PRIVATE = "RSA/ECB/PKCS1Padding"
         const val KEY_PAIR_ALGORITHM = "RSA"
         const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"
-        const val MASK_GENERATION_FUNCTION = "MGF1"
         const val SECRET_KEY_ALGORITHM = "AES"
     }
 }

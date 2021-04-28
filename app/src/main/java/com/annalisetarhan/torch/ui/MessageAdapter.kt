@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.annalisetarhan.torch.DomainMessage
+import com.annalisetarhan.torch.R
 import com.annalisetarhan.torch.databinding.ReceivedMessageBinding
 import com.annalisetarhan.torch.databinding.SentMessageBinding
 
@@ -35,6 +36,14 @@ class MessageAdapter(val context: Context) : RecyclerView.Adapter<RecyclerView.V
         when (holder) {
             is ReceivedMessageViewHolder -> holder.bind(current)
             is SentMessageViewHolder -> holder.bind(current)
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (messages[position].sentByMe) {
+            SENT
+        } else {
+            RECEIVED
         }
     }
 

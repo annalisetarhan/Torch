@@ -3,6 +3,7 @@ package com.annalisetarhan.torch.database
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.annalisetarhan.torch.DomainMessage
 import java.util.*
 
 @Entity(tableName = "message_table")

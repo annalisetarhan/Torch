@@ -3,6 +3,9 @@ package com.annalisetarhan.torch
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
 import com.annalisetarhan.torch.connection.NetworkMessage
 import com.annalisetarhan.torch.connection.WiFiConnection
 import com.annalisetarhan.torch.database.AppDatabase
@@ -14,8 +17,6 @@ class Repository(context: Context) {
     val network = WiFiConnection(context, Handler(Looper.getMainLooper()))
     val messageDao = AppDatabase.getInstance(context).messageDao
 
-    var numActiveHashtags = 0
-
     // TODO: track users, mapping truncated pk to full pk. when a user de/registers from/to a hashtag,
     //  change color code in previous messages (to grey?) if a user deregisters from the only shared hashtag,
     //  forget their full pk
@@ -26,44 +27,52 @@ class Repository(context: Context) {
     }
 
     /* Enforce the invariant that the rawMessage is at most 160 characters */
-    fun sendStandardMessage(hashtag: String, message: String) {
+    suspend fun sendStandardMessage(hashtag: String, message: String) {
         val databaseMessage = messageFactory.makeStandardDatabaseMessage(hashtag, message)
         sendMessage(databaseMessage)
     }
 
-    fun sendPrivateMessage(truncPk: Long, message: String) {
+    suspend fun sendPrivateMessage(truncPk: Long, message: String) {
         val databaseMessage = messageFactory.makePrivateDatabaseMessage(truncPk, message)
         sendMessage(databaseMessage)
     }
 
-    private fun sendMessage(databaseMessage: DatabaseMessage) {
+    private suspend fun sendMessage(databaseMessage: DatabaseMessage) {
         messageDao.insert(databaseMessage)
         val networkMessage = messageFactory.makeNetworkMessage(databaseMessage)
         network.sendMessage(networkMessage)
     }
 
-    fun receiveMessage(networkMessage: NetworkMessage) {
+    suspend fun receiveMessage(networkMessage: NetworkMessage) {
         val dbMessage = messageFactory.reconstructStandardMessage(networkMessage)
         messageDao.insert(dbMessage)
     }
 
-    /* This should never be called if numActiveHashtags > 4 */
-    fun addHashtag(hashtag: String) {
+    suspend fun addHashtag(hashtag: String): LiveData<List<DomainMessage>> {
         messageFactory.addHashtag(hashtag)
-        numActiveHashtags++
 
         val mysteriousMessages = messageDao.getAllEncrypted()
         for (message in mysteriousMessages) {
             if (messageFactory.decryptStandardMessage(hashtag, message)) {
                 messageDao.addDecryptedInfo(message)
-                // TODO: liveData this so the view populates automatically
             }
+        }
+
+        /* Gets a livedata for messages in the database with the hashtags
+        * and transforms each of the database messages into a domain message */
+        return Transformations.map(messageDao.getHashtagMessages(hashtag)) { list ->
+            val newList = mutableListOf<DomainMessage>()
+            for (databaseMessage in list) {
+                newList.add(messageFactory.makeDomainMessage(databaseMessage))
+            }
+            newList
         }
     }
 
     /* This should only be called with existing active hashtags. Previously decrypted data gets to stay. */
     fun removeHashtag(hashtag: String) {
         messageFactory.removeHashtag(hashtag)
-        numActiveHashtags--
     }
+
+
 }
