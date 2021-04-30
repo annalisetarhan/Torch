@@ -1,11 +1,15 @@
 package com.annalisetarhan.torch
 
 import com.annalisetarhan.torch.encryption.MessageFactory
-import org.junit.Test
 import kotlin.random.Random
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class EncryptDecryptTest {
-    private val factory = MessageFactory()
+    private val factory = MessageFactory(InstrumentationRegistry.getInstrumentation().targetContext)
 
     @Test
     fun encryptDecrypt() {
@@ -33,7 +37,7 @@ class EncryptDecryptTest {
     private fun encryptDecryptPrivate() {
         val rawMessage = getRandomPrivateMessage()
 
-        val dbMessage = factory.makePrivateDatabaseMessage(factory.truncatedPublicKey(), rawMessage)
+        val dbMessage = factory.makePrivateDatabaseMessage(factory.keys.truncatedPublicKey(), rawMessage)
         val networkMessage = factory.makeNetworkMessage(dbMessage)
         val reconstructed = factory.reconstructPrivateMessage(networkMessage)
 

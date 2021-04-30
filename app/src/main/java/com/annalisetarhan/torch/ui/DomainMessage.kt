@@ -1,4 +1,4 @@
-package com.annalisetarhan.torch
+package com.annalisetarhan.torch.ui
 
 data class DomainMessage(
         val messageId: ByteArray,

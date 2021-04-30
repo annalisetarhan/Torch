@@ -25,4 +25,8 @@
             android:id="@+id/action_ConvoFragment_to_HashtagsFragment"
             app:destination="@id/HashtagsFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.annalisetarhan.torch.ui.SettingsFragment"
+        android:label="SettingsFragment" />
 </navigation>

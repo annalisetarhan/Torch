@@ -4,8 +4,6 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.annalisetarhan.torch.DomainMessage
-import com.annalisetarhan.torch.R
 import com.annalisetarhan.torch.databinding.ReceivedMessageBinding
 import com.annalisetarhan.torch.databinding.SentMessageBinding
 

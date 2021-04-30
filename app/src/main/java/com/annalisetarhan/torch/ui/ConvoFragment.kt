@@ -32,7 +32,6 @@ class ConvoFragment : Fragment() {
         }
         binding = FragmentConvoBinding.inflate(inflater, container, false)
         binding.hashtag = "#$hashtag"
-
         viewModel = ViewModelProvider(requireActivity(), defaultViewModelProviderFactory).get(MainViewModel::class.java)
 
         sendMessageButtonSetup()
@@ -43,10 +42,11 @@ class ConvoFragment : Fragment() {
         return binding.root
     }
 
-    private fun setUpRecyclerView() {
-        adapter = MessageAdapter(requireContext())
-        binding.recyclerView.adapter = adapter
-        binding.recyclerView.layoutManager = LinearLayoutManager(context)
+    /* If scrollToBottom() is called in onCreateView instead, going back to fragment (from settings,
+    * for example) shows the very top of the message thread instead of the most recent messages.*/
+    override fun onResume() {
+        scrollToBottom()
+        super.onResume()
     }
 
     private fun sendMessageButtonSetup() {
@@ -65,18 +65,23 @@ class ConvoFragment : Fragment() {
                 viewModel.sendMessage(message, hashtag)
                 binding.sendMessageEditText.text.clear()
             }
-            scrollToPosition(adapter.itemCount-1)
         }
     }
 
     private fun watchForNewReceivedMessages() {
         viewModel.getHashtagMessagesLivedata(hashtag)?.observe(viewLifecycleOwner, { messages ->
             messages?.let { adapter.setMessages(it) }
-            scrollToPosition(adapter.itemCount - 1)
+            scrollToBottom()
         })
     }
 
-    private fun scrollToPosition(position: Int) {
-        binding.recyclerView.scrollToPosition(position)
+    private fun setUpRecyclerView() {
+        adapter = MessageAdapter(requireContext())
+        binding.recyclerView.adapter = adapter
+        binding.recyclerView.layoutManager = LinearLayoutManager(context)
+    }
+
+    private fun scrollToBottom() {
+        binding.recyclerView.scrollToPosition(adapter.itemCount-1)
     }
 }

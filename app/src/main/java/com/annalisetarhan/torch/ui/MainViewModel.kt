@@ -1,22 +1,18 @@
 package com.annalisetarhan.torch.ui
 
 import android.app.Application
-import android.preference.PreferenceManager
-import android.util.Log
-import android.util.Log.DEBUG
+import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.annalisetarhan.torch.BuildConfig
-import com.annalisetarhan.torch.DomainMessage
-import com.annalisetarhan.torch.Repository
+import com.annalisetarhan.torch.database.Repository
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    val prefs = application.getSharedPreferences("prefs", 0)
-
+    private val prefs: SharedPreferences = application.getSharedPreferences("prefs", 0)
     var repo: Repository = Repository(application)
 
     val hashtagToLivedata = mutableMapOf<String, LiveData<List<DomainMessage>>>()
@@ -33,6 +29,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendMessage(message: String, hashtag: String) {
         viewModelScope.launch { repo.sendStandardMessage(hashtag, message) }
+    }
+
+    fun getPublicKey(): String {
+        return repo.getPublicKey()
+    }
+
+    fun changeKeys() {
+        repo.resetKeys()
     }
 
     fun addHashtag(hashtag: String) {

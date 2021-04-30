@@ -2,8 +2,10 @@
   <dictionary name="annalisetarhan">
     <words>
       <w>ciphertext</w>
+      <w>convo</w>
       <w>hashkey</w>
       <w>hashtag</w>
+      <w>hashtags</w>
       <w>trunc</w>
     </words>
   </dictionary>

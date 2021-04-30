@@ -6,7 +6,6 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -16,15 +15,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.annalisetarhan.torch.R
 import com.annalisetarhan.torch.databinding.FragmentHashtagsBinding
-import org.w3c.dom.Text
 
 class HashtagsFragment : Fragment() {
 
     lateinit var binding: FragmentHashtagsBinding
     lateinit var viewModel: MainViewModel
 
-    var numHashtags = 0
-    val hashtags = arrayOfNulls<String>(5)
+    private var numHashtags = 0
+    private val hashtags = arrayOfNulls<String>(5)
 
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
@@ -38,7 +36,7 @@ class HashtagsFragment : Fragment() {
         setClickListeners()
         setUpContextMenu()
 
-        /* Commented out for testing. Of course the emulator doesn't have wifi aware
+        /* Commented out for testing. Of course the emulator doesn't have wifi aware.
         if ((activity as MainActivity).hasWifiAware) {
             setVisibility()
             setClickListeners()
@@ -49,28 +47,10 @@ class HashtagsFragment : Fragment() {
         return binding.root
     }
 
-    // TODO: add a button to delete a hashtag
-
-
-
     private fun addNewHashtag(hashtag: String) {
         binding.emptyHashtagListText.visibility = GONE
         val strippedHashtag = hashtag.trim().trim('#')  // Remove leading and trailing whitespace and #s
         viewModel.addHashtag(strippedHashtag)
-    }
-
-    private fun removeHashtag(hashtag: String) {
-        var deletedFlag = false
-        for (i in 0..3) {
-            if (hashtags[i].toString() == hashtag) {
-                hashtags[i] = hashtags[i+1]
-                deletedFlag = true
-            } else if (deletedFlag) {
-                hashtags[i] = hashtags[i+1]
-            }
-        }
-        hashtags[4] = null
-        viewModel.deleteHashtag(hashtag)
     }
 
     private fun observeHashtags() {
@@ -119,7 +99,7 @@ class HashtagsFragment : Fragment() {
     }
 
     private fun showProblem() {
-        binding.emptyHashtagListText.text = "Your device doesn't support WiFi Aware :("
+        binding.emptyHashtagListText.text = getString(R.string.no_wifi_aware_message)
         binding.fab.visibility = GONE
         binding.hashtagOne.visibility = GONE
         binding.hashtagTwo.visibility = GONE
@@ -133,7 +113,7 @@ class HashtagsFragment : Fragment() {
             if (numHashtags > 4) {
                 Toast.makeText(activity, "Only five hashtags at a time, please!", Toast.LENGTH_SHORT).show()
             } else {
-                showDialog()
+                showAddHashtagDialog()
             }
         }
 
@@ -159,7 +139,7 @@ class HashtagsFragment : Fragment() {
         }
     }
 
-    private fun showDialog() {
+    private fun showAddHashtagDialog() {
         val hashtagEditText = EditText(activity)
         hashtagEditText.gravity = Gravity.CENTER_HORIZONTAL
         AlertDialog.Builder(activity)

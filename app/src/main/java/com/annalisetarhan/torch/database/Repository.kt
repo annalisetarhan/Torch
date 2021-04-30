@@ -1,9 +1,8 @@
-package com.annalisetarhan.torch
+package com.annalisetarhan.torch.database
 
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import com.annalisetarhan.torch.connection.NetworkMessage
@@ -11,10 +10,11 @@ import com.annalisetarhan.torch.connection.WiFiConnection
 import com.annalisetarhan.torch.database.AppDatabase
 import com.annalisetarhan.torch.database.DatabaseMessage
 import com.annalisetarhan.torch.encryption.MessageFactory
+import com.annalisetarhan.torch.ui.DomainMessage
 
 class Repository(context: Context) {
-    val messageFactory = MessageFactory()
-    val network = WiFiConnection(context, Handler(Looper.getMainLooper()))
+    private val messageFactory = MessageFactory(context)
+    private val network = WiFiConnection(context, Handler(Looper.getMainLooper()))
     val messageDao = AppDatabase.getInstance(context).messageDao
 
     // TODO: track users, mapping truncated pk to full pk. when a user de/registers from/to a hashtag,
@@ -22,9 +22,14 @@ class Repository(context: Context) {
     //  forget their full pk
 
     init {
-        // TODO: get active hashtags from sharedPrefs, feed them to messageFactory
         // TODO: set up some sort of looper to scan database and discard dead messages
+
     }
+
+    /* This should only be called with existing active hashtags. Previously decrypted data gets to stay. */
+    fun removeHashtag(hashtag: String) = messageFactory.removeHashtag(hashtag)
+    fun getPublicKey(): String = messageFactory.getTruncatedPublicKey().toString()
+    fun resetKeys() = messageFactory.resetKeys()
 
     /* Enforce the invariant that the rawMessage is at most 160 characters */
     suspend fun sendStandardMessage(hashtag: String, message: String) {
@@ -68,11 +73,5 @@ class Repository(context: Context) {
             newList
         }
     }
-
-    /* This should only be called with existing active hashtags. Previously decrypted data gets to stay. */
-    fun removeHashtag(hashtag: String) {
-        messageFactory.removeHashtag(hashtag)
-    }
-
 
 }

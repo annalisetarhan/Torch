@@ -4,6 +4,7 @@
 
     <string name="hashtag">#%1$s</string>
     <string name="delete_hashtag">Delete Hashtag</string>
+    <string name="current_key">Current Public Key: %1$s</string>
 
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
@@ -13,4 +14,9 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="change_key">Change Key</string>
+    <string name="settings">Settings</string>
+    <string name="no_wifi_aware_message">Your device doesn\'t support WiFi Aware :(</string>
+    <string name="send">Send</string>
+    <string name="say_something">Say something!</string>
 </resources>
