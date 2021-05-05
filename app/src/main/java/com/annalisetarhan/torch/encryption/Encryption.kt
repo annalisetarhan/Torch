@@ -15,9 +15,8 @@ class Encryption(val keys: Keys) {
     private val sha = MessageDigest.getInstance(Constants.MESSAGE_DIGEST_ALGORITHM)
     private val fullPublicKeys: MutableMap<Long, RSAPublicKey> = mutableMapOf()
 
-
-    /* TESTING ONLY   val tempFullPublicKeys = mutableMapOf<Long, RSAPublicKey>()*/
-    /* TESTING ONLY    init { tempFullPublicKeys[keys.truncatedPublicKey()] = keys.publicKey() as RSAPublicKey }*/
+    /* TESTING ONLY   val tempFullPublicKeys = mutableMapOf<Long, RSAPublicKey>() */
+    /* TESTING ONLY    init { tempFullPublicKeys[keys.truncatedPublicKey()] = keys.publicKey() as RSAPublicKey } */
 
     // Returns: rawIV + encrypted(hashtag + timeSent + senderPkTrunc + message)
     fun encryptStandardMessage(hashtag: String, timeSent: Long, rawMessage: String): ByteArray {
@@ -53,7 +52,7 @@ class Encryption(val keys: Keys) {
 
     // Maximum message length seems to be 101 bytes
     fun encryptPrivateMessage(receiverPublicKeyTrunc: Long, timeSent: Long, rawMessage: String): ByteArray {
-        /*TESTING ONLY     val receiverPublicKeyFull = tempFullPublicKeys[receiverPublicKeyTrunc] as RSAPublicKey*/
+        /*TESTING ONLY    val receiverPublicKeyFull = tempFullPublicKeys[receiverPublicKeyTrunc] as RSAPublicKey */
         val receiverPublicKeyFull: RSAPublicKey? = fullPublicKeys[receiverPublicKeyTrunc]
         val senderPublicKeyTrunc = keys.truncatedPublicKey()
 

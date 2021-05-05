@@ -18,8 +18,8 @@ import com.annalisetarhan.torch.databinding.FragmentHashtagsBinding
 
 class HashtagsFragment : Fragment() {
 
-    lateinit var binding: FragmentHashtagsBinding
     lateinit var viewModel: MainViewModel
+    lateinit var binding: FragmentHashtagsBinding
 
     private var numHashtags = 0
     private val hashtags = arrayOfNulls<String>(5)

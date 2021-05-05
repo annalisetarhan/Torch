@@ -6,19 +6,16 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.annalisetarhan.torch.R
 import com.annalisetarhan.torch.databinding.FragmentConvoBinding
-import java.text.FieldPosition
 
 class ConvoFragment : Fragment() {
-
+    lateinit var viewModel: MainViewModel
     lateinit var binding: FragmentConvoBinding
     lateinit var hashtag: String
-    lateinit var viewModel: MainViewModel
     lateinit var adapter: MessageAdapter
 
     override fun onCreateView(

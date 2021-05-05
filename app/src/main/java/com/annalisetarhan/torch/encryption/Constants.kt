@@ -10,7 +10,7 @@ class Constants {
         const val RSA_KEY_BITS = 1024
         const val TRUNC_KEY_BYTES = Long.SIZE_BYTES
         const val TIMESTAMP_BYTES = 8
-        const val MESSAGE_INFO_BYTES = 1
+        const val MAX_MESSAGE_SIZE = 400
 
         const val CIPHER_TRANSFORMATION_STANDARD = "AES/GCM/NoPadding"
         const val CIPHER_TRANSFORMATION_PRIVATE = "RSA/ECB/PKCS1Padding"

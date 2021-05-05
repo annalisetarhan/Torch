@@ -27,6 +27,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    override fun onCleared() {
+        repo.killConnection()
+        super.onCleared()
+    }
+
     fun sendMessage(message: String, hashtag: String) {
         viewModelScope.launch { repo.sendStandardMessage(hashtag, message) }
     }

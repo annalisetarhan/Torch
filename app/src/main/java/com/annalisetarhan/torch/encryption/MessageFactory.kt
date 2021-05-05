@@ -9,6 +9,7 @@ import com.annalisetarhan.torch.encryption.Constants.Companion.TRUNC_KEY_BYTES
 import com.annalisetarhan.torch.encryption.NumberConversions.Companion.intFromByteArray
 import com.annalisetarhan.torch.encryption.NumberConversions.Companion.longFromByteArray
 import com.annalisetarhan.torch.encryption.NumberConversions.Companion.longToByteArray
+import com.annalisetarhan.torch.encryption.Time.Companion.currentTimeInSecs
 import java.util.*
 
 class MessageFactory(context: Context) {
@@ -19,7 +20,6 @@ class MessageFactory(context: Context) {
 
     private val activeHashtags = arrayListOf<String>()
 
-    fun getPublicKey(): String = keys.publicKey().toString()
     fun getTruncatedPublicKey(): Long = keys.truncatedPublicKey()
     fun resetKeys() = keys.generateKeyPair()
     fun addHashtag(hashtag: String) = activeHashtags.add(hashtag)
@@ -32,7 +32,7 @@ class MessageFactory(context: Context) {
      */
 
     fun makeStandardDatabaseMessage(hashtag: String, rawMessage: String): DatabaseMessage {
-        val timeSent: Long = time.currentTimeInSecs()
+        val timeSent: Long = currentTimeInSecs()
         val encMessage: ByteArray = encryption.encryptStandardMessage(hashtag, timeSent, rawMessage)
 
         return DatabaseMessage(
@@ -49,7 +49,7 @@ class MessageFactory(context: Context) {
     }
 
     fun makePrivateDatabaseMessage(receiverPublicKeyTrunc: Long, rawMessage: String): DatabaseMessage {
-        val timeSent: Long = time.currentTimeInSecs()
+        val timeSent: Long = currentTimeInSecs()
         val encMessage: ByteArray = encryption.encryptPrivateMessage(receiverPublicKeyTrunc, timeSent, rawMessage)
 
         return DatabaseMessage(
