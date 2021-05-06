@@ -1,9 +1,12 @@
 package com.annalisetarhan.torch.connection
 
-import com.annalisetarhan.torch.encryption.Constants
+import com.annalisetarhan.torch.encryption.Constants.Companion.MESSAGE_INFO_BYTES
+import com.annalisetarhan.torch.encryption.Constants.Companion.TIMESTAMP_BYTES
+import com.annalisetarhan.torch.encryption.NumberConversions.Companion.intFromByteArray
+import com.annalisetarhan.torch.encryption.NumberConversions.Companion.intToByteArray
 
 data class NetworkMessage(
-        val networkId: Int?,    // Truncated to fit WiFi Aware constraints
+        val networkId: Int?,
         val ttd: ByteArray,
         val messageInfo: Byte,
         val payload: ByteArray
@@ -14,17 +17,23 @@ data class NetworkMessage(
  */
 
 fun messageToBytes(message: NetworkMessage): ByteArray {
-        val byteArray = ByteArray(Constants.MAX_MESSAGE_SIZE)
+        /* Size of message, not including networkId */
+        val messageSize: Int = TIMESTAMP_BYTES + MESSAGE_INFO_BYTES + message.payload.size
+
+        /* ByteArray representation of message size, appended to beginning of message */
+        val messageSizeBytes: ByteArray = intToByteArray(messageSize)
+        val byteArray = ByteArray(Int.SIZE_BYTES + messageSize)
+
         var index = 0
-        for (i in message.ttd.indices) {
+        for (i in 0 until Int.SIZE_BYTES) {
+                byteArray[index++] = messageSizeBytes[i]
+        }
+        for (i in 0 until TIMESTAMP_BYTES) {
                 byteArray[index++] = message.ttd[i]
         }
         byteArray[index++] = message.messageInfo
         for (i in message.payload.indices) {
                 byteArray[index++] = message.payload[i]
-        }
-        while (index < Constants.MAX_MESSAGE_SIZE) {
-                byteArray[index++] = 0
         }
         return byteArray
 }
@@ -41,8 +50,15 @@ fun bytesToMessageList(byteArray: ByteArray): List<NetworkMessage> {
         val list = mutableListOf<NetworkMessage>()
         var index = 0
         while (index < byteArray.size) {
-                list.add(bytesToMessage(byteArray.sliceArray(IntRange(index, index+ Constants.MAX_MESSAGE_SIZE))))
-                index += Constants.MAX_MESSAGE_SIZE
+                /* Figure out how big the message is */
+                val firstByteOfPayload = index + Int.SIZE_BYTES
+                val messageSizeBytes = byteArray.sliceArray(index until firstByteOfPayload)
+                val messageSize = intFromByteArray(messageSizeBytes)
+
+                val firstByteOfNextMessage = firstByteOfPayload + messageSize
+                val messageBytes = byteArray.sliceArray(firstByteOfPayload until firstByteOfNextMessage)
+                list.add(bytesToMessage(messageBytes))
+                index = firstByteOfNextMessage
         }
         return list
 }

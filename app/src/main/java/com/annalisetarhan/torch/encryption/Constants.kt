@@ -10,12 +10,13 @@ class Constants {
         const val RSA_KEY_BITS = 1024
         const val TRUNC_KEY_BYTES = Long.SIZE_BYTES
         const val TIMESTAMP_BYTES = 8
-        const val MAX_MESSAGE_SIZE = 400
+        const val MESSAGE_INFO_BYTES = 1
+        const val MAX_MESSAGE_SIZE = 300
 
         const val CIPHER_TRANSFORMATION_STANDARD = "AES/GCM/NoPadding"
         const val CIPHER_TRANSFORMATION_PRIVATE = "RSA/ECB/PKCS1Padding"
         const val KEY_PAIR_ALGORITHM = "RSA"
-        const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"  // Does this actually need to be 256? It's only for making hashkeys from hashtagsand creating message digests of already encrypted messages. It would save 16 bytes in msgs...
+        const val MESSAGE_DIGEST_ALGORITHM = "SHA-256"
         const val SECRET_KEY_ALGORITHM = "AES"
     }
 }

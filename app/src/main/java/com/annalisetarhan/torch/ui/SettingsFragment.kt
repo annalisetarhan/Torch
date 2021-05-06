@@ -17,20 +17,20 @@ class SettingsFragment : Fragment() {
         binding = FragmentSettingsBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(requireActivity(), defaultViewModelProviderFactory).get(MainViewModel::class.java)
 
-        setUpPublicKey()
+        showPublicKey()
         setUpButtons()
 
         return binding.root
     }
 
-    private fun setUpPublicKey() {
+    private fun showPublicKey() {
         binding.publicKey = viewModel.getPublicKey()
     }
 
     private fun setUpButtons() {
         binding.changeKeysButton.setOnClickListener {
             viewModel.changeKeys()
-            setUpPublicKey()
+            showPublicKey()
         }
     }
 }

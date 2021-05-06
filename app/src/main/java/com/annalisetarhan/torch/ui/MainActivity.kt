@@ -20,6 +20,7 @@ class  MainActivity : AppCompatActivity() {
         if (applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
             Toast.makeText(applicationContext, "WiFi Aware available!", Toast.LENGTH_LONG).show()
         } else {
+            /* The hashtags fragment checks this and displays a sad message if appropriate */
             hasWifiAware = false
         }
 

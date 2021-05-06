@@ -2,8 +2,14 @@ package com.annalisetarhan.torch
 
 import com.annalisetarhan.torch.encryption.MessageFactory
 import kotlin.random.Random
+
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.annalisetarhan.torch.connection.NetworkMessage
+import com.annalisetarhan.torch.connection.bytesToMessageList
+import com.annalisetarhan.torch.connection.messageListToBytes
+import com.annalisetarhan.torch.database.DatabaseMessage
+
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -19,6 +25,46 @@ class EncryptDecryptTest {
         }
     }
 
+    @Test
+    fun toBytesAndBack() {
+        // Make 101 message lists
+        for (i in 0..100) {
+            val dbMessageList = mutableListOf<DatabaseMessage>()
+            val networkMsgList = mutableListOf<NetworkMessage>()
+            val hashtags = Array(101) {""}
+            val messages = Array(101) {""}
+
+            // With 101 messages each
+            for (j in 0..100) {
+
+                // Generate and save hashtags and messages
+                val hashtag = getRandomHashtag()
+                val messageText = getRandomStandardMessage()
+                hashtags[j] = hashtag
+                messages[j] = messageText
+
+                // Construct database and network messages
+                val dbMessage = factory.makeStandardDatabaseMessage(hashtag,messageText)
+                dbMessageList.add(dbMessage)
+                networkMsgList.add(factory.makeNetworkMessage(dbMessage))
+            }
+
+            // Convert network message list to bytearray
+            val bytes = messageListToBytes(networkMsgList)
+
+            // And convert them back
+            val newNetworkMessages = bytesToMessageList(bytes)
+
+            // See if the new network messages have the same content as the originals
+            for (j in 0..100) {
+                val reconstructed = factory.reconstructStandardMessage(newNetworkMessages[j])
+                factory.decryptStandardMessage(hashtags[j], reconstructed)
+                assert(reconstructed.hashtag.equals(hashtags[j]))
+                assert(reconstructed.message.equals(messages[j]))
+            }
+        }
+    }
+
     private fun encryptDecryptStandard() {
         val hashtag = getRandomHashtag()
         val rawMessage = getRandomStandardMessage()
@@ -27,7 +73,8 @@ class EncryptDecryptTest {
         val networkMessage = factory.makeNetworkMessage(dbMessage)
         val reconstructed = factory.reconstructStandardMessage(networkMessage)
 
-        // This is a workaround because I'm not inserting hashtag into activeHashtags. Normally, reconstruct will do it automatically.
+        // This is a workaround because I'm not inserting hashtag into activeHashtags.
+        // Normally, reconstruct will do it automatically.
         factory.decryptStandardMessage(hashtag, reconstructed)
 
         assert(reconstructed.hashtag.equals(hashtag))

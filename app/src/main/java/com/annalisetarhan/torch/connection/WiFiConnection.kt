@@ -18,7 +18,6 @@ import com.annalisetarhan.torch.encryption.Constants.Companion.MAX_MESSAGE_SIZE
 import com.annalisetarhan.torch.encryption.Time.Companion.currentTime
 import java.net.ServerSocket
 
-
 class WiFiConnection(val context: Context, private val repo: Repository) {
     val manager: WifiAwareManager? = context.getSystemService(Context.WIFI_AWARE_SERVICE) as WifiAwareManager?
     var wifiSession: WifiAwareSession? = null
@@ -29,7 +28,7 @@ class WiFiConnection(val context: Context, private val repo: Repository) {
     val handlerThread: HandlerThread = HandlerThread("HandlerThread")
     var handler: Handler
 
-    /* Used to purge dead messages from database */
+    /* Will run once per minute on background thread */
     private lateinit var runnable: Runnable
 
     /* Used for one-on-one connections */
@@ -70,10 +69,11 @@ class WiFiConnection(val context: Context, private val repo: Repository) {
         getSession()
         startSubscribing()
 
-        /* Once per minute, purge dead messages from database and compare databases with a peer */
+        /* Once per minute, purge dead messages from database and compare databases with a peer.
+         * It's possible that the peer will send back messages that were just deleted, but I doubt it matters. */
         runnable = Runnable {
-            connectToSomeone()
             repo.purgeDatabase(currentTime())
+            connectToSomeone()
             handler.postDelayed(runnable, 60000)
         }
         handler.post(runnable)
@@ -134,6 +134,8 @@ class WiFiConnection(val context: Context, private val repo: Repository) {
 
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
+
+                /* Get publisher's socket and send messages */
                 val peerIpv6 = peerAwareInfo?.peerIpv6Addr
                 val peerPort = peerAwareInfo?.port
                 val socket = peerPort?.let { network.socketFactory.createSocket(peerIpv6, it) }

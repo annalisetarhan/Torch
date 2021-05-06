@@ -9,7 +9,7 @@ data class DatabaseMessage(
     /* uuid - Internal to this database */
     @PrimaryKey val uuid: String,
 
-    /* messageId - Used to identify message to peers. SHA(encMessage). includes iv/receiverPublicKeyTrunc */
+    /* messageId - Used to identify message to peers. SHA(encMessage). Includes iv/receiverPublicKeyTrunc */
     @ColumnInfo val messageId : ByteArray,
 
     /* TTD - time to die, seconds since epoch when message should be deleted */

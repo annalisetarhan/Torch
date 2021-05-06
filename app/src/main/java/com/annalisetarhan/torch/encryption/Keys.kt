@@ -13,8 +13,8 @@ class Keys(context: Context) {
     private lateinit var keyPair: KeyPair
     private lateinit var prefs: EncryptedSharedPreferences
 
-
     init {
+        /* Use the stored keypair if there is one */
         getEncryptedSharedPrefs(context)
         if (prefs.getString("public_key", null) != null
                 && prefs.getString("private_key", null) != null) {
@@ -69,8 +69,7 @@ class Keys(context: Context) {
         editor.apply()
     }
 
-    fun getEncryptedSharedPrefs(context: Context) {
-        /* KeyPair is stored in encrypted shared preferences. */
+    private fun getEncryptedSharedPrefs(context: Context) {
         val keyGenParameterSpec = MasterKeys.AES256_GCM_SPEC
         val masterKeyAlias = MasterKeys.getOrCreate(keyGenParameterSpec)
         prefs = EncryptedSharedPreferences.create(

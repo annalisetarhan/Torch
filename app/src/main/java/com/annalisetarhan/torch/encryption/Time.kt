@@ -5,6 +5,7 @@ class Time {
 
     fun getMessageTtd(timeSent: Long): Long = timeSent + ttd
 
+    // TODO: add UI for this
     fun updateTtdSetting(hours: Int) {
         ttd = hours * Constants.SECONDS_IN_AN_HOUR
     }

@@ -36,20 +36,17 @@ class HashtagsFragment : Fragment() {
         setClickListeners()
         setUpContextMenu()
 
-        /* Commented out for testing. Of course the emulator doesn't have wifi aware.
-        if ((activity as MainActivity).hasWifiAware) {
-            setVisibility()
-            setClickListeners()
-        } else {
+        /* Comment out for testing on emulators or other devices that aren't WiFi Aware enabled. */
+        if ((activity as MainActivity).hasWifiAware != true) {
             showProblem()
-        } */
+        }
 
         return binding.root
     }
 
     private fun addNewHashtag(hashtag: String) {
         binding.emptyHashtagListText.visibility = GONE
-        val strippedHashtag = hashtag.trim().trim('#')  // Remove leading and trailing whitespace and #s
+        val strippedHashtag = hashtag.trim().trim('#')
         viewModel.addHashtag(strippedHashtag)
     }
 
@@ -165,7 +162,9 @@ class HashtagsFragment : Fragment() {
                 .show()
     }
 
-    /* Functions to make the 'Delete Hashtag' menu appear when hashtags are longclicked */
+    /*
+     *  DELETE HASHTAGS
+     */
     private var doomedHashtag: String? = null
 
     override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo?) {

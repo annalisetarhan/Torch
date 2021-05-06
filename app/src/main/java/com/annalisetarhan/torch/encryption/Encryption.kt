@@ -11,14 +11,14 @@ import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-class Encryption(val keys: Keys) {
+class Encryption(private val keys: Keys) {
     private val sha = MessageDigest.getInstance(Constants.MESSAGE_DIGEST_ALGORITHM)
     private val fullPublicKeys: MutableMap<Long, RSAPublicKey> = mutableMapOf()
 
-    /* TESTING ONLY   val tempFullPublicKeys = mutableMapOf<Long, RSAPublicKey>() */
-    /* TESTING ONLY    init { tempFullPublicKeys[keys.truncatedPublicKey()] = keys.publicKey() as RSAPublicKey } */
+    // TESTING ONLY   val tempFullPublicKeys = mutableMapOf<Long, RSAPublicKey>()
+    // TESTING ONLY   init { tempFullPublicKeys[keys.truncatedPublicKey()] = keys.publicKey() as RSAPublicKey }
 
-    // Returns: rawIV + encrypted(hashtag + timeSent + senderPkTrunc + message)
+    /* Returns: rawIV + encrypted(hashtag + timeSent + senderPkTrunc + message) */
     fun encryptStandardMessage(hashtag: String, timeSent: Long, rawMessage: String): ByteArray {
         val hashkey = hash(hashtag)
         val key = SecretKeySpec(hashkey, Constants.SECRET_KEY_ALGORITHM)
@@ -50,9 +50,10 @@ class Encryption(val keys: Keys) {
         return iv + ciphertext
     }
 
-    // Maximum message length seems to be 101 bytes
     fun encryptPrivateMessage(receiverPublicKeyTrunc: Long, timeSent: Long, rawMessage: String): ByteArray {
-        /*TESTING ONLY    val receiverPublicKeyFull = tempFullPublicKeys[receiverPublicKeyTrunc] as RSAPublicKey */
+
+        // TESTING ONLY   val receiverPublicKeyFull = tempFullPublicKeys[receiverPublicKeyTrunc] as RSAPublicKey
+
         val receiverPublicKeyFull: RSAPublicKey? = fullPublicKeys[receiverPublicKeyTrunc]
         val senderPublicKeyTrunc = keys.truncatedPublicKey()
 
@@ -66,7 +67,8 @@ class Encryption(val keys: Keys) {
         )
     }
 
-    // Returns true if the hashtag was the right one, false otherwise. Updates dbMessage fields. MUST update database afterwards!!
+    /* Returns true if the hashtag was the right one, false otherwise.
+     * Updates dbMessage fields. MUST update database afterwards!! */
     fun decryptStandardMessage(hashtag: String, dbMessage: DatabaseMessage): Boolean {
         val hashkey = hash(hashtag)
         val iv = dbMessage.encMessage.copyOfRange(0, Constants.GCM_IV_BYTES)
@@ -77,8 +79,6 @@ class Encryption(val keys: Keys) {
         val cipher = Cipher.getInstance(Constants.CIPHER_TRANSFORMATION_STANDARD)
         cipher.init(Cipher.DECRYPT_MODE, key, gcmSpec)
 
-        /* There's debate about whether you should ever try/catch in Kotlin,
-            but the alternatives seem iffy. I'm doing it, smell or not. */
         val plaintext = try {
             cipher.doFinal(ciphertext)
         } catch (e: Exception) {
@@ -99,7 +99,6 @@ class Encryption(val keys: Keys) {
             dbMessage.timeSent = longFromByteArray(timeSent)
             dbMessage.senderPublicKeyTrunc = longFromByteArray(senderPublicKey)
             dbMessage.message = message.toString(Charsets.UTF_8)
-
             true
         } else {
             false
@@ -133,9 +132,8 @@ class Encryption(val keys: Keys) {
         dbMessage.message = message.toString(Charsets.UTF_8)
     }
 
-    // Get hashkey from hashtag or create message digest to use as shared messageId
+    /* Get hashkey from hashtag or create message digest to use as shared messageId */
     fun hash(message: String): ByteArray {
         return sha.digest(message.toByteArray(Charsets.UTF_8))
     }
-
 }
